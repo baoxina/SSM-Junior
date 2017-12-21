@@ -1,0 +1,50 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd ">
+
+	<!-- 加载属性文件 -->
+	<context:property-placeholder location="classpath:db.properties"/>
+
+	<!-- 配置数据源，使用dbcp连接池 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}"/>
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="maxActive" value="10" />
+		<property name="maxIdle" value="5" />
+	</bean>
+	
+	<!-- 让Spring创建并管理单例的sqlSessionFactory，这是整合Spring和Mybatis整合的关键 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation" value="/WEB-INF/classes/mybatis/SqlMapConfig.xml"/>
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- 【mapper代理实现方式之二】推荐使用：
+		使用mapper批量扫描：
+			1.该mapper扫描与mybatis核心配置文件的mapper扫描不同 
+			2.mybatis核心配置文件扫描mapper接口是指：通过扫描包下的mapper接口将mapper文件加载到内存中创建运行环境
+			3.而下面这个mapper扫描配置是指：从mapper包中扫描出mapper接口，自动创建代理对象并且在spring容器中进行注册
+			4.此处如果配置了扫描包，mybatis核心配置文件中就不需要配置相同包的扫描了
+			5.能够扫描成功的规则：需要将mapper接口类名和mapper.xml映射文件名称保持一致，且在同一个目录下
+			6.自动扫描出来的mapper的bean的id为mapper接口的类名(首字母小写)
+	-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 指定扫描的包名，如果扫描多个包，每个包中间用英文逗号隔开 -->
+		<property name="basePackage" value="com.baoxina.web.mapper"/>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+	</bean>	
+		
+</beans>
